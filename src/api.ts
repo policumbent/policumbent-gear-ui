@@ -8,15 +8,15 @@ function convertGears(values: object[]): Gear[] {
         return {
             id: gear["id"],
             position: {
-                shift_up: +gear["position"]["shift_up"],
-                shift_down: +gear["position"]["shift_down"]
+                up: +gear["position"]["up"],
+                down: +gear["position"]["down"]
             } as GearPosition
         } as Gear;
     })
 }
 
 export async function getBikeInfo(): Promise<BikeInfo> {
-    //const { data } = await axios.get(`${process.env.API_URL}/api/info/`);
+    //const { data } = await axios.get(`/api/info/`);
     let data = {} as object;
     await waitFor(500);
     data = {
@@ -29,35 +29,35 @@ export async function getBikeInfo(): Promise<BikeInfo> {
 }
 
 export async function getGearValues(): Promise<Servo[]> {
-    //const { data } = await axios.get(`${process.env.API_URL}/api/gear/configuration`);
+    //const { data } = await axios.get(`/api/gear/configuration`);
     await waitFor(500);
     let data = {} as object;
     data = {
         "servo2": [ 
-            { "id": 1, "position": { "shift_up": 1, "shift_down": 2 } },
-            { "id": 2, "position": { "shift_up": 3, "shift_down": 4 } },
-            { "id": 3, "position": { "shift_up": 5, "shift_down": 6 } },
-            { "id": 4, "position": { "shift_up": 7, "shift_down": 8 } },
-            { "id": 5, "position": { "shift_up": 9, "shift_down": 10 } },
-            { "id": 6, "position": { "shift_up": 11, "shift_down": 12 } },
-            { "id": 7, "position": { "shift_up": 13, "shift_down": 14 } },
-            { "id": 8, "position": { "shift_up": 15, "shift_down": 16 } },
-            { "id": 9, "position": { "shift_up": 17, "shift_down": 18 } },
-            { "id": 10, "position": { "shift_up": 19, "shift_down": 20 } },
-            { "id": 11, "position": { "shift_up": 21, "shift_down": 22 } },
+            { "id": 1, "position": { "up": 1, "down": 2 } },
+            { "id": 2, "position": { "up": 3, "down": 4 } },
+            { "id": 3, "position": { "up": 5, "down": 6 } },
+            { "id": 4, "position": { "up": 7, "down": 8 } },
+            { "id": 5, "position": { "up": 9, "down": 10 } },
+            { "id": 6, "position": { "up": 11, "down": 12 } },
+            { "id": 7, "position": { "up": 13, "down": 14 } },
+            { "id": 8, "position": { "up": 15, "down": 16 } },
+            { "id": 9, "position": { "up": 17, "down": 18 } },
+            { "id": 10, "position": { "up": 19, "down": 20 } },
+            { "id": 11, "position": { "up": 21, "down": 22 } },
         ],
         "servo1": [ 
-            { "id": 1, "position": { "shift_up": 101, "shift_down": 102 } },
-            { "id": 2, "position": { "shift_up": 103, "shift_down": 104 } },
-            { "id": 3, "position": { "shift_up": 105, "shift_down": 106 } },
-            { "id": 4, "position": { "shift_up": 107, "shift_down": 108 } },
-            { "id": 5, "position": { "shift_up": 109, "shift_down": 110 } },
-            { "id": 6, "position": { "shift_up": 111, "shift_down": 112 } },
-            { "id": 7, "position": { "shift_up": 113, "shift_down": 114 } },
-            { "id": 8, "position": { "shift_up": 115, "shift_down": 116 } },
-            { "id": 9, "position": { "shift_up": 117, "shift_down": 118 } },
-            { "id": 10, "position": { "shift_up": 119, "shift_down": 120 } },
-            { "id": 11, "position": { "shift_up": 121, "shift_down": 122 } },
+            { "id": 1, "position": { "up": 101, "down": 102 } },
+            { "id": 2, "position": { "up": 103, "down": 104 } },
+            { "id": 3, "position": { "up": 105, "down": 106 } },
+            { "id": 4, "position": { "up": 107, "down": 108 } },
+            { "id": 5, "position": { "up": 109, "down": 110 } },
+            { "id": 6, "position": { "up": 111, "down": 112 } },
+            { "id": 7, "position": { "up": 113, "down": 114 } },
+            { "id": 8, "position": { "up": 115, "down": 116 } },
+            { "id": 9, "position": { "up": 117, "down": 118 } },
+            { "id": 10, "position": { "up": 119, "down": 120 } },
+            { "id": 11, "position": { "up": 121, "down": 122 } },
         ]
     };
 
@@ -79,18 +79,56 @@ export async function getGearValues(): Promise<Servo[]> {
 }
 
 export async function sendBikeData(positions: Servo[]): Promise<string> {
-    let servo1 = {};
-    let servo2 = {};
-    servo1[positions[0].name] = positions[0].gears;
-    if (positions[1]){
-        servo2[positions[1].name] = positions[1].gears;
+    if (positions.length > 0) {
+        let servo1 = {};
+        let servo2 = {};
+        servo1[positions[0].name] = positions[0].gears;
+        if (positions.length > 1){
+            servo2[positions[1].name] = positions[1].gears;
+        }
+        const payload = servo2 ? {...servo1, ...servo2} : servo1;
+        console.log("Sending: ", payload);
+        try {
+            const response = await axios.post(`/api/gear/configuration`, payload);
+            return response.data.message;
+        } catch (error) {
+            alert(error.message);
+            return error;
+        }
     }
-    const payload = servo2 ? {...servo1, ...servo2} : servo1;
-    console.log(payload);
-    try {
-        const response = await axios.post(`${process.env.API_URL}/api/gear/configuration`, payload);
-        return response.data.message;
-    } catch (error) {
-        return error;
-    }
+    else
+        throw "No values to send";
+}
+
+export function exportPositions(positions: Servo[], fileName: string){
+    const content = JSON.stringify(positions);
+    const blob = new Blob([content], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = fileName;
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+export function readPositionsFromFile(fileInput: HTMLInputElement): Promise<Servo[]>{
+    fileInput.click();
+    return new Promise((resolve, reject) => {
+        fileInput.addEventListener("change", function fileSelected() {
+            try {
+                fileInput.removeEventListener("change", fileSelected);
+                const file = fileInput.files[0];
+                const reader = new FileReader();
+                reader.readAsText(file);
+                reader.onload = () => {
+                    const content = reader.result as string;
+                    const positions = JSON.parse(content) as Servo[];
+                    console.log(positions);
+                    resolve(positions);
+                }
+            } catch (error) {
+                reject(error);
+            }
+        });
+    });
 }

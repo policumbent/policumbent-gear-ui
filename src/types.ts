@@ -5,12 +5,12 @@ export type Gear = {
 }
 
 export type GearPosition = {
-    shift_up: number;
-    shift_down: number;
+    up: number;
+    down: number;
 }
 
 export type Servo = {
-    id: number;
+    id: number; // 1 || 2
     name: string; // servo1 || servo2
     gears: Gear[];
 }
