@@ -75,9 +75,9 @@ export async function sendBikeData(positions: Servo[]): Promise<string> {
     if (positions.length > 0) {
         let servo1 = {};
         let servo2 = {};
-        servo1[positions[0].name] = positions[0].gears;
+        servo1[positions[0].name] = positions[0].gears.sort((a, b) => a.id - b.id);
         if (positions.length > 1){
-            servo2[positions[1].name] = positions[1].gears;
+            servo2[positions[1].name] = positions[1].gears.sort((a, b) => a.id - b.id);
         }
         const payload: object = servo2 ? {...servo1, ...servo2} : servo1;
         console.log("Sending: ", payload);
