@@ -1,22 +1,12 @@
-import type { BikeInfo, Gear, GearPosition, Servo } from "./types";
-import axios from "axios";
-
-const waitFor = delay => new Promise(resolve => setTimeout(resolve, delay));
-
-function convertGears(values: object[]): Gear[] {
-    return values.map((gear: object) => {
-        return {
-            id: gear["id"],
-            position: {
-                up: +gear["position"]["up"],
-                down: +gear["position"]["down"]
-            } as GearPosition
-        } as Gear;
-    })
-}
+import type { BikeInfo, Servo } from "./types";
+import { convertGears, waitFor } from "./utils";
+// import axios from "axios";
 
 export async function getBikeInfo(): Promise<BikeInfo> {
-    //const { data } = await axios.get(`/api/info/`);
+    // const { data } = await axios.get(`/api/info`);
+    // OR without axios:
+    // const response = await fetch('/api/info');
+    // const data = await response.json();
     let data = {} as object;
     await waitFor(500);
     data = {
@@ -29,7 +19,10 @@ export async function getBikeInfo(): Promise<BikeInfo> {
 }
 
 export async function getGearValues(): Promise<Servo[]> {
-    //const { data } = await axios.get(`/api/gear/configuration`);
+    // const { data } = await axios.get(`/api/gear/configuration`);
+    // OR without axios:
+    //const response = await fetch('/api/gear/configuration');
+    // const data = await response.json();
     await waitFor(500);
     let data = {} as object;
     data = {
@@ -86,11 +79,21 @@ export async function sendBikeData(positions: Servo[]): Promise<string> {
         if (positions.length > 1){
             servo2[positions[1].name] = positions[1].gears;
         }
-        const payload = servo2 ? {...servo1, ...servo2} : servo1;
+        const payload: object = servo2 ? {...servo1, ...servo2} : servo1;
         console.log("Sending: ", payload);
         try {
-            const response = await axios.post(`/api/gear/configuration`, payload);
-            return response.data.message;
+            // const response = await axios.post(`/api/gear/configuration`, payload);
+            const res = await fetch('/api/gear/configuration', {
+                method: 'POST',
+                body: JSON.stringify(payload)
+		    })
+            if (res.ok) {
+                const json = await res.json()
+                return json;
+            }
+            else {
+                throw new Error(`${res.status} ${res.statusText}`);
+            }
         } catch (error) {
             alert(error.message);
             return error;
@@ -98,37 +101,4 @@ export async function sendBikeData(positions: Servo[]): Promise<string> {
     }
     else
         throw "No values to send";
-}
-
-export function exportPositions(positions: Servo[], fileName: string){
-    const content = JSON.stringify(positions);
-    const blob = new Blob([content], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = fileName;
-    a.click();
-    URL.revokeObjectURL(url);
-}
-
-export function readPositionsFromFile(fileInput: HTMLInputElement): Promise<Servo[]>{
-    fileInput.click();
-    return new Promise((resolve, reject) => {
-        fileInput.addEventListener("change", function fileSelected() {
-            try {
-                fileInput.removeEventListener("change", fileSelected);
-                const file = fileInput.files[0];
-                const reader = new FileReader();
-                reader.readAsText(file);
-                reader.onload = () => {
-                    const content = reader.result as string;
-                    const positions = JSON.parse(content) as Servo[];
-                    console.log(positions);
-                    resolve(positions);
-                }
-            } catch (error) {
-                reject(error);
-            }
-        });
-    });
 }

@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { onMount } from "svelte";
-	import { getBikeInfo, getGearValues, sendBikeData, exportPositions, readPositionsFromFile } from "./api";
-	import type { Servo } from "./types";
+	import { getBikeInfo, getGearValues, sendBikeData} from "./lib/api";
+	import { exportPositions, readPositionsFromFile } from "./lib/utils";
+	import type { Servo } from "./lib/types";
 
 	let selected_gear: number;
 	let selected_servo: Array<number>;
@@ -35,6 +36,7 @@
 		if (secondSelectedServo)
 			secondSelectedServo.gears[selected_gear-1].position.up++;
 	}
+	
 	function decrementUp() {
 		firstSelectedServo.gears[selected_gear-1].position.up++;
 		if (secondSelectedServo)
