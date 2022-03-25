@@ -10,6 +10,7 @@
 	let num_servo: number;
 	let bike_name: string;
 	let positions: Servo[];
+	let reverse = false;
 
 	onMount(async () => {
 		try {
@@ -26,9 +27,14 @@
 	}
 
 	function decrementDown() {
-		firstSelectedServo.gears[selected_gear-1].position.down++;
-		if (secondSelectedServo)
-			secondSelectedServo.gears[selected_gear-1].position.down++;
+		firstSelectedServo.gears[selected_gear-1].position.down--;
+		if (firstSelectedServo.gears[selected_gear-1].position.down < 0)
+			firstSelectedServo.gears[selected_gear-1].position.down = 0;
+		if (secondSelectedServo) {
+			secondSelectedServo.gears[selected_gear-1].position.down--;
+			if (secondSelectedServo.gears[selected_gear-1].position.down < 0)
+				secondSelectedServo.gears[selected_gear-1].position.down = 0;
+		}
 	}
 
 	function incrementUp() {
@@ -38,9 +44,14 @@
 	}
 	
 	function decrementUp() {
-		firstSelectedServo.gears[selected_gear-1].position.up++;
-		if (secondSelectedServo)
-			secondSelectedServo.gears[selected_gear-1].position.up++;
+		firstSelectedServo.gears[selected_gear-1].position.up--;
+		if (firstSelectedServo.gears[selected_gear-1].position.up < 0)
+			firstSelectedServo.gears[selected_gear-1].position.up = 0;
+		if (secondSelectedServo) {
+			secondSelectedServo.gears[selected_gear-1].position.up--;
+			if (secondSelectedServo.gears[selected_gear-1].position.up < 0)
+				secondSelectedServo.gears[selected_gear-1].position.up = 0;
+		}
 	}
 
 	function sendData(){
@@ -95,9 +106,12 @@
 			<p>
 				Seleziona un servo ed una marcia per iniziare la calibrazione del cambio.<br/>
 				Modificare i valori dalla form in fondo alla pagina.<br/>
-				Per inviare le modifiche premi sull’icona in basso a destra.<br/>
+				Per inviare le modifiche alla bici premi sull’icona in basso a destra.<br/>
 				Per resettare le modifiche premere l'icona in basso a sinistra, si riprendono i valori attuali dalla bici.
 			</p>
+			<input type=checkbox bind:checked={reverse} id="reverseCheckbox" hidden >
+			<label class="reverse-button" for="reverseCheckbox">Inverti layout</label>
+			
 		</section>
 		<section>
 			<div class="gear-container">
@@ -114,7 +128,7 @@
 						<label for="servo_2-2" class="servo double-servo" class:selected-servo={selected_servo.includes(2)}>Servo 2</label>
 					</div>
 				{/if }
-				<div class="gears">
+				<div class="gears" class:gears-reverse="{reverse}">
 					{#each Array(num_gears) as _,i }
 						<div class="gear gear-{i+1}" class:selected-gear={selected_gear==i+1} on:click="{ ()=>selected_gear=i+1 }"><span>{i+1}</span></div>
 					{/each}
@@ -131,7 +145,7 @@
 					<div>
 						<label for="down_position_1">DOWN</label>
 						<div class="input-wrapper">
-							<svg on:click={decrementDown} width="11" height="20" viewBox="0 0 11 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+							<svg on:click={() => reverse ? incrementDown() : decrementDown()} width="11" height="20" viewBox="0 0 11 20" fill="none" xmlns="http://www.w3.org/2000/svg">
 								<path d="M10 19L2.44523 11.76C1.64725 10.9953 1.62085 9.72828 2.38627 8.93097L10 1" stroke="black" stroke-width="2" stroke-linecap="round"/>
 							</svg>	
 							{#if firstSelectedServo }
@@ -141,7 +155,7 @@
 								<span>/</span>
 								<input bind:value={secondSelectedServo.gears[selected_gear-1].position.down} type="number" id="down_position_2" name="down_position_2" min="0" max="360" step="1" />
 							{/if }
-							<svg on:click={incrementDown} width="11" height="20" viewBox="0 0 11 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+							<svg on:click={() => reverse ? decrementDown() : incrementDown()} width="11" height="20" viewBox="0 0 11 20" fill="none" xmlns="http://www.w3.org/2000/svg">
 								<path d="M1 1L8.55477 8.23999C9.35275 9.00471 9.37915 10.2717 8.61373 11.069L1 19" stroke="black" stroke-width="2" stroke-linecap="round"/>
 							</svg>
 						</div>
@@ -149,7 +163,7 @@
 					<div>
 						<label for="down_position_1">UP</label>
 						<div class="input-wrapper">
-							<svg on:click={decrementUp} width="11" height="20" viewBox="0 0 11 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+							<svg on:click={() => reverse ? incrementUp() : decrementUp()} width="11" height="20" viewBox="0 0 11 20" fill="none" xmlns="http://www.w3.org/2000/svg">
 								<path d="M10 19L2.44523 11.76C1.64725 10.9953 1.62085 9.72828 2.38627 8.93097L10 1" stroke="black" stroke-width="2" stroke-linecap="round"/>
 							</svg>
 							{#if firstSelectedServo }
@@ -159,7 +173,7 @@
 								<span>/</span>
 								<input bind:value={secondSelectedServo.gears[selected_gear-1].position.up} type="number" id="down_position_2" name="down_position_2" min="0" max="360" step="1" />
 							{/if }
-							<svg on:click={incrementUp} width="11" height="20" viewBox="0 0 11 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+							<svg on:click={() => reverse ? decrementUp() : incrementUp()} width="11" height="20" viewBox="0 0 11 20" fill="none" xmlns="http://www.w3.org/2000/svg">
 								<path d="M1 1L8.55477 8.23999C9.35275 9.00471 9.37915 10.2717 8.61373 11.069L1 19" stroke="black" stroke-width="2" stroke-linecap="round"/>
 							</svg>
 						</div>
@@ -168,8 +182,9 @@
 			</section>
 		{/if}
 		<section class="export-container">
-			<p on:click={() => exportPositions(positions, `${bike_name}_${ Date.now() }.json`)}>Esporta posizioni su file</p>
-			<p on:click={() => importWrapper() }>Importa posizioni da file</p>
+			<span on:click={() => exportPositions(positions, `${bike_name}_${ Date.now() }.json`)}>Esporta posizioni su file</span>
+			<br/>
+			<span on:click={() => importWrapper() }>Importa posizioni da file</span>
 			<input type="file" id="import-file" hidden>
 		</section>
 		<div class="send-button" on:click="{ ()=>sendData() }">
@@ -196,6 +211,14 @@
 	.gear-container{
 		position: relative;
 	}
+	
+	.reverse-button{
+		background-color: #aaaaaa;
+		padding: 12px;
+		cursor: pointer;
+		display: inline-block;
+		border-radius: 8px;
+	}
 
 	.gears{
 		display: flex;
@@ -203,6 +226,9 @@
 		justify-content: center;
 		align-items: center;
 		padding: 39px 0px;
+		&-reverse{
+			flex-direction: row-reverse;
+		}
 	}
 
 	.gear {
@@ -276,6 +302,7 @@
 		margin: 0;
 		width: 50px;
 	}
+
 	input::-webkit-outer-spin-button,
 	input::-webkit-inner-spin-button {
 	-webkit-appearance: none;
@@ -328,7 +355,7 @@
 		z-index: 3;
 	}
 
-	.export-container p{
+	.export-container span{
 		text-decoration: underline;
 		cursor: pointer;
 	}
