@@ -9,7 +9,8 @@
 	let num_gears: number;
 	let num_servo: number;
 	let bike_name: string;
-	let positions: Servo[];
+	let old_positions: Servo[];
+	let new_positions: Servo[];
 	let reverse = false;
 
 	onMount(async () => {
@@ -55,7 +56,7 @@
 	}
 
 	function sendData(){
-		sendBikeData(positions);
+		sendBikeData(old_positions, new_positions);
 	}
 
 	async function importWrapper(){
@@ -63,8 +64,8 @@
 		try {
 			const new_pos = await readPositionsFromFile(fileInput);
 			console.log("Read from file: ", new_pos);
-			if (new_pos && new_pos.length == positions.length && new_pos.every(p => p.gears.length === num_gears)) {
-				positions = new_pos;
+			if (new_pos && new_pos.every(p => p.gears.length === num_gears)) {
+				new_positions = old_positions = new_pos;
 				alert("Import successful");
 			} else {
 				alert("Invalid file");
@@ -84,19 +85,20 @@
 		selected_gear = 1;
 		selected_servo = [1];
 		const _positions = await getGearValues();
-		positions = _positions.sort((a, b) => a.id - b.id);
-		console.log("Received positions: ", positions);
+		new_positions = _positions.sort((a, b) => a.id - b.id);
+		old_positions = JSON.parse(JSON.stringify(new_positions));
+		console.log("Received positions: ", old_positions);
 	}
 
-	$: firstSelectedServo = positions && positions.find( p => p.id === selected_servo[0] );
-	$: secondSelectedServo = positions && selected_servo.length > 1 ? positions.find( p => p.id === selected_servo[1] ) : undefined;
+	$: firstSelectedServo = new_positions && new_positions.find( p => p.id === selected_servo[0] );
+	$: secondSelectedServo = new_positions && selected_servo.length > 1 ? new_positions.find( p => p.id === selected_servo[1] ) : undefined;
 	$: if (num_servo==1) {
 		selected_servo = [selected_servo[0]];
 	}
 </script>
 
 <main class="container">
-	{#if !num_servo || !num_gears || !positions }
+	{#if !num_servo || !num_gears || !new_positions }
 		<div>
 			Getting bike info...
 		</div>
@@ -182,7 +184,7 @@
 			</section>
 		{/if}
 		<section class="export-container">
-			<span on:click={() => exportPositions(positions, `${bike_name}_${ Date.now() }.json`)}>Esporta posizioni su file</span>
+			<span on:click={() => exportPositions(new_positions, `${bike_name}_${ Date.now() }.json`)}>Esporta posizioni su file</span>
 			<br/>
 			<span on:click={() => importWrapper() }>Importa posizioni da file</span>
 			<input type="file" id="import-file" hidden>

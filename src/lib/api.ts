@@ -1,4 +1,4 @@
-import type { BikeInfo, Servo } from "./types";
+import type { BikeInfo, Gear, Servo } from "./types";
 import { convertGears, waitFor } from "./utils";
 // import axios from "axios";
 
@@ -71,28 +71,70 @@ export async function getGearValues(): Promise<Servo[]> {
     return values;
 }
 
-export async function sendBikeData(positions: Servo[]): Promise<string> {
-    if (positions.length > 0) {
-        let servo1 = {};
-        let servo2 = {};
-        servo1[positions[0].name] = positions[0].gears.sort((a, b) => a.id - b.id);
-        if (positions.length > 1){
-            servo2[positions[1].name] = positions[1].gears.sort((a, b) => a.id - b.id);
+export async function sendGear(payload: object): Promise<string> {
+
+    try {
+        const res = await fetch(`/api/gear?id=${payload[Object.keys(payload)[0]].id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        });
+        if (res.ok) {
+            return "ok";
         }
-        const payload: object = servo2 ? {...servo1, ...servo2} : servo1;
+        else {
+            throw new Error(`${res.status} ${res.statusText}`);
+        }
+    } catch (error) {
+        throw new Error("Unable to send request");
+    }
+}
+
+export async function sendBikeData(old_positions: Servo[], new_positions: Servo[]): Promise<string> {
+    console.log("old_positions: ", old_positions);
+    console.log("new_positions: ", new_positions);
+    if (new_positions.length > 0) {
+        let payload: object[] = [];
+        
+        // get diffs between old and new
+        new_positions.forEach(servo => {
+            let old_servo = old_positions.find(old_servo => old_servo.id === servo.id);
+            if (old_servo) {
+                let diffs = servo.gears.filter(gear => {
+                    let old_gear = old_servo.gears.find(old_gear => old_gear.id === gear.id);
+                    return !old_gear || old_gear.position.up !== gear.position.up || old_gear.position.down !== gear.position.down;
+                })
+                if (diffs.length > 0) {
+                    diffs.forEach(gear => {
+                        let data = {};
+                        data[servo.name] = {
+                            id: gear.id,
+                            position: gear.position
+                        }
+                        if (payload.filter(d => d[Object.keys(d)[0]].id === gear.id).length === 0) {
+                            const other_servo_gear = new_positions.find(other_servo => servo.id !== other_servo.id).gears.find(other_gear => other_gear.id === gear.id);
+                            if (other_servo_gear) {
+                                data[new_positions.find(other_servo => servo.id !== other_servo.id).name] = {
+                                    id: other_servo_gear.id,
+                                    position: other_servo_gear.position
+                                }
+                            }
+                            payload.push(data);
+                        }
+                    });
+                }
+            }
+        });
+
         console.log("Sending: ", payload);
         try {
             // const response = await axios.post(`/api/gear/configuration`, payload);
-            const res = await fetch('/api/gear/configuration', {
-                method: 'POST',
-                body: JSON.stringify(payload)
-		    })
-            if (res.ok) {
-                const json = await res.json()
-                return json;
-            }
-            else {
-                throw new Error(`${res.status} ${res.statusText}`);
+            try {
+                Promise.all(payload.map(diff => sendGear(diff)));
+            } catch (error) {
+                console.log(error);
             }
         } catch (error) {
             alert(error.message);
