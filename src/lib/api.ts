@@ -1,10 +1,7 @@
-import type { BikeInfo, Gear, Servo } from "./types";
+import type { BikeInfo, Servo } from "./types";
 import { convertGears, waitFor } from "./utils";
-// import axios from "axios";
 
 export async function getBikeInfo(): Promise<BikeInfo> {
-    // const { data } = await axios.get(`/api/info`);
-    // OR without axios:
     // const response = await fetch('/api/info');
     // const data = await response.json();
     let data = {} as object;
@@ -19,8 +16,6 @@ export async function getBikeInfo(): Promise<BikeInfo> {
 }
 
 export async function getGearValues(): Promise<Servo[]> {
-    // const { data } = await axios.get(`/api/gear/configuration`);
-    // OR without axios:
     //const response = await fetch('/api/gear/configuration');
     // const data = await response.json();
     await waitFor(500);
@@ -72,27 +67,22 @@ export async function getGearValues(): Promise<Servo[]> {
 }
 
 export async function sendGear(payload: object): Promise<string> {
-
-    try {
-        const res = await fetch(`/api/gear?id=${payload[Object.keys(payload)[0]].id}`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(payload)
-        });
-        if (res.ok) {
-            return "ok";
-        }
-        else {
-            throw new Error(`${res.status} ${res.statusText}`);
-        }
-    } catch (error) {
-        throw new Error("Unable to send request");
+    const res = await fetch(`/api/gear?id=${payload[Object.keys(payload)[0]].id}`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+    });
+    if (res.ok) {
+        return "ok";
+    }
+    else {
+        throw new Error(`${res.status} ${res.statusText}`);
     }
 }
 
-export async function sendBikeData(old_positions: Servo[], new_positions: Servo[]): Promise<string> {
+export async function sendBikeData(old_positions: Servo[], new_positions: Servo[]): Promise<number> {
     console.log("old_positions: ", old_positions);
     console.log("new_positions: ", new_positions);
     if (new_positions.length > 0) {
@@ -100,12 +90,12 @@ export async function sendBikeData(old_positions: Servo[], new_positions: Servo[
         
         // get diffs between old and new
         new_positions.forEach(servo => {
-            let old_servo = old_positions.find(old_servo => old_servo.id === servo.id);
+            const old_servo = old_positions.find(old_servo => old_servo.id === servo.id);
             if (old_servo) {
                 let diffs = servo.gears.filter(gear => {
-                    let old_gear = old_servo.gears.find(old_gear => old_gear.id === gear.id);
+                    const old_gear = old_servo.gears.find(old_gear => old_gear.id === gear.id);
                     return !old_gear || old_gear.position.up !== gear.position.up || old_gear.position.down !== gear.position.down;
-                })
+                });
                 if (diffs.length > 0) {
                     diffs.forEach(gear => {
                         let data = {};
@@ -129,17 +119,8 @@ export async function sendBikeData(old_positions: Servo[], new_positions: Servo[
         });
 
         console.log("Sending: ", payload);
-        try {
-            // const response = await axios.post(`/api/gear/configuration`, payload);
-            try {
-                Promise.all(payload.map(diff => sendGear(diff)));
-            } catch (error) {
-                console.log(error);
-            }
-        } catch (error) {
-            alert(error.message);
-            return error;
-        }
+        await Promise.all(payload.map(diff => sendGear(diff)));
+        return 0;
     }
     else
         throw "No values to send";

@@ -55,8 +55,13 @@
 		}
 	}
 
-	function sendData(){
-		sendBikeData(old_positions, new_positions);
+	async function sendData(){
+		try {
+			if (await sendBikeData(old_positions, new_positions)==0)
+				old_positions = JSON.parse(JSON.stringify(new_positions));
+		} catch (error) {
+			alert(error);
+		}
 	}
 
 	async function importWrapper(){
@@ -65,7 +70,8 @@
 			const new_pos = await readPositionsFromFile(fileInput);
 			console.log("Read from file: ", new_pos);
 			if (new_pos && new_pos.every(p => p.gears.length === num_gears)) {
-				new_positions = old_positions = new_pos;
+				old_positions = JSON.parse(JSON.stringify(new_pos));
+				new_positions = JSON.parse(JSON.stringify(new_pos));
 				alert("Import successful");
 			} else {
 				alert("Invalid file");
