@@ -9,7 +9,7 @@
 	let num_gears: number;
 	let num_servo: number;
 	let bike_name: string;
-	let old_positions: Servo[];
+	//let old_positions: Servo[];
 	let new_positions: Servo[];
 	let reverse = false;
 
@@ -57,10 +57,16 @@
 
 	async function sendData(){
 		try {
-			if (await sendBikeData(old_positions, new_positions)==0)
-				old_positions = JSON.parse(JSON.stringify(new_positions));
+			let data = [
+				new_positions[0].gears[selected_gear-1]
+			];
+			if (num_servo > 1)
+				data.push(new_positions[1].gears[selected_gear-1]);
+			if (await sendBikeData(data)==0){
+				alert(`Gear ${selected_gear} sent successfully`);	
+			}
 		} catch (error) {
-			alert(error);
+			alert(`Error sending ${selected_gear}° gear:\n${error}`);
 		}
 	}
 
@@ -70,7 +76,7 @@
 			const new_pos = await readPositionsFromFile(fileInput);
 			console.log("Read from file: ", new_pos);
 			if (new_pos && new_pos.every(p => p.gears.length === num_gears)) {
-				old_positions = JSON.parse(JSON.stringify(new_pos));
+				// old_positions = JSON.parse(JSON.stringify(new_pos));
 				new_positions = JSON.parse(JSON.stringify(new_pos));
 				alert("Import successful");
 			} else {
@@ -92,8 +98,8 @@
 		selected_servo = [1];
 		const _positions = await getGearValues();
 		new_positions = _positions.sort((a, b) => a.id - b.id);
-		old_positions = JSON.parse(JSON.stringify(new_positions));
-		console.log("Received positions: ", old_positions);
+		//old_positions = JSON.parse(JSON.stringify(new_positions));
+		console.log("Received positions: ", new_positions);
 	}
 
 	$: firstSelectedServo = new_positions && new_positions.find( p => p.id === selected_servo[0] );
@@ -114,7 +120,7 @@
 			<p>
 				Seleziona un servo ed una marcia per iniziare la calibrazione del cambio.<br/>
 				Modificare i valori dalla form in fondo alla pagina.<br/>
-				Per inviare le modifiche alla bici premi sull’icona in basso a destra.<br/>
+				Per inviare le modifiche alla bici premi sull’icona in basso a destra, invierà i valori della marcia selezionata.<br/>
 				Per resettare le modifiche premere l'icona in basso a sinistra, si riprendono i valori attuali dalla bici.
 			</p>
 			<input type=checkbox bind:checked={reverse} id="reverseCheckbox" hidden >
@@ -126,7 +132,7 @@
 				{#if num_servo==1 }
 					<div class="single-servo-wrapper">
 						<input id="servo_1-1" type="checkbox" value={1} hidden bind:group={selected_servo} />
-						<label for="servo_1-1" class="servo" class:selected-servo={selected_servo.includes(1)}>Servo 1</label>
+						<label for="servo_1-1" class="servo" class:selected-servo={selected_servo.includes(1)} on:click={e => e.preventDefault()}>Servo 1</label>
 					</div>
 				{:else }
 					<div class="double-servo-wrapper">
