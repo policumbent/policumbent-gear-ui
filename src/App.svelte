@@ -1,15 +1,15 @@
 <script lang="ts">
 	import { onMount } from "svelte";
-	import { getBikeInfo, getGearValues, sendBikeData} from "./lib/api";
+	import { getBikeInfo, getGearValues, getPid, sendBikeData, setPid} from "./lib/api";
 	import { exportPositions, readPositionsFromFile } from "./lib/utils";
-	import type { Servo } from "./lib/types";
+	import type { Pid, Servo } from "./lib/types";
 
 	let selected_gear: number;
 	let selected_servo: Array<number>;
 	let num_gears: number;
 	let num_servo: number;
 	let bike_name: string;
-	//let old_positions: Servo[];
+	let pid: Pid;
 	let new_positions: Servo[];
 	let reverse = false;
 
@@ -29,12 +29,8 @@
 
 	function decrementDown() {
 		firstSelectedServo.gears[selected_gear-1].position.down--;
-		if (firstSelectedServo.gears[selected_gear-1].position.down < 0)
-			firstSelectedServo.gears[selected_gear-1].position.down = 0;
 		if (secondSelectedServo) {
 			secondSelectedServo.gears[selected_gear-1].position.down--;
-			if (secondSelectedServo.gears[selected_gear-1].position.down < 0)
-				secondSelectedServo.gears[selected_gear-1].position.down = 0;
 		}
 	}
 
@@ -46,12 +42,8 @@
 	
 	function decrementUp() {
 		firstSelectedServo.gears[selected_gear-1].position.up--;
-		if (firstSelectedServo.gears[selected_gear-1].position.up < 0)
-			firstSelectedServo.gears[selected_gear-1].position.up = 0;
 		if (secondSelectedServo) {
 			secondSelectedServo.gears[selected_gear-1].position.up--;
-			if (secondSelectedServo.gears[selected_gear-1].position.up < 0)
-				secondSelectedServo.gears[selected_gear-1].position.up = 0;
 		}
 	}
 
@@ -88,6 +80,26 @@
 		}
 	}
 
+	async function sendPid(){
+		console.log(pid);
+		try {
+			if (await setPid(pid)=="ok"){
+				alert("PID sent successfully");	
+			}
+		} catch (error) {
+			alert(`Error sending PID:\n${error}`);
+		}
+	}
+
+	async function resetPid(){
+		console.log(pid);
+		try {
+			pid = await getPid();
+		} catch (error) {
+			alert(`Error getting PID:\n${error}`);
+		}
+	}
+
 	async function receiveData(){
 		const bikeInfo = await getBikeInfo();
 		console.log("Received bike info: ", bikeInfo);
@@ -100,6 +112,8 @@
 		new_positions = _positions.sort((a, b) => a.id - b.id);
 		//old_positions = JSON.parse(JSON.stringify(new_positions));
 		console.log("Received positions: ", new_positions);
+		if (num_servo == 1)
+			pid = await getPid();
 	}
 
 	$: firstSelectedServo = new_positions && new_positions.find( p => p.id === selected_servo[0] );
@@ -127,6 +141,31 @@
 			<label class="reverse-button" for="reverseCheckbox">Inverti layout</label>
 			
 		</section>
+		{#if num_servo==1 && pid}
+		<section>
+			<h2>Modifica PID</h2>
+			<div class="pid-form">
+				<form>
+					<div class="form-group">
+						<label for="kp">Kp: </label>
+						<input type="number" class="form-control" id="kp" bind:value={pid.Kp} step="0.01">
+					</div>
+					<div class="form-group">
+						<label for="ki">Ki: </label>
+						<input type="number" class="form-control" id="ki" bind:value={pid.Ki} step="0.01">
+					</div>
+					<div class="form-group">
+						<label for="kd">Kd: </label>
+						<input type="number" class="form-control" id="kd" bind:value={pid.Kd} step="0.01">
+					</div>
+					<div class="form-btn-wrapper">
+						<button type="button" on:click={resetPid}>Reset PID</button>
+						<button type="button" on:click={sendPid}>Invia PID</button>
+					</div>
+				</form>
+			</div>
+		</section>
+		{/if}
 		<section>
 			<div class="gear-container">
 				{#if num_servo==1 }
@@ -163,11 +202,11 @@
 								<path d="M10 19L2.44523 11.76C1.64725 10.9953 1.62085 9.72828 2.38627 8.93097L10 1" stroke="black" stroke-width="2" stroke-linecap="round"/>
 							</svg>	
 							{#if firstSelectedServo }
-								<input bind:value={firstSelectedServo.gears[selected_gear-1].position.down} type="number" id="down_position_1" name="down_position_1" min="0" max="360" step="1" />
+								<input bind:value={firstSelectedServo.gears[selected_gear-1].position.down} type="number" id="down_position_1" name="down_position_1" step="1" />
 							{/if }						
 							{#if secondSelectedServo}
 								<span>/</span>
-								<input bind:value={secondSelectedServo.gears[selected_gear-1].position.down} type="number" id="down_position_2" name="down_position_2" min="0" max="360" step="1" />
+								<input bind:value={secondSelectedServo.gears[selected_gear-1].position.down} type="number" id="down_position_2" name="down_position_2" step="1" />
 							{/if }
 							<svg on:click={() => reverse ? decrementDown() : incrementDown()} width="11" height="20" viewBox="0 0 11 20" fill="none" xmlns="http://www.w3.org/2000/svg">
 								<path d="M1 1L8.55477 8.23999C9.35275 9.00471 9.37915 10.2717 8.61373 11.069L1 19" stroke="black" stroke-width="2" stroke-linecap="round"/>
@@ -181,11 +220,11 @@
 								<path d="M10 19L2.44523 11.76C1.64725 10.9953 1.62085 9.72828 2.38627 8.93097L10 1" stroke="black" stroke-width="2" stroke-linecap="round"/>
 							</svg>
 							{#if firstSelectedServo }
-								<input bind:value={firstSelectedServo.gears[selected_gear-1].position.up} type="number" id="down_position_1" name="down_position_1" min="0" max="360" step="1" />
+								<input bind:value={firstSelectedServo.gears[selected_gear-1].position.up} type="number" id="down_position_1" name="down_position_1" step="1" />
 							{/if }						
 							{#if secondSelectedServo}
 								<span>/</span>
-								<input bind:value={secondSelectedServo.gears[selected_gear-1].position.up} type="number" id="down_position_2" name="down_position_2" min="0" max="360" step="1" />
+								<input bind:value={secondSelectedServo.gears[selected_gear-1].position.up} type="number" id="down_position_2" name="down_position_2" step="1" />
 							{/if }
 							<svg on:click={() => reverse ? decrementUp() : incrementUp()} width="11" height="20" viewBox="0 0 11 20" fill="none" xmlns="http://www.w3.org/2000/svg">
 								<path d="M1 1L8.55477 8.23999C9.35275 9.00471 9.37915 10.2717 8.61373 11.069L1 19" stroke="black" stroke-width="2" stroke-linecap="round"/>
@@ -372,6 +411,32 @@
 	.export-container span{
 		text-decoration: underline;
 		cursor: pointer;
+	}
+
+	.form-group{
+		display: flex;
+		flex-direction: row;
+		justify-content: center;
+		align-items: center;
+		margin-bottom: 12px;
+		> label {
+			margin-right: 8px;
+			width: 40px;
+		}
+		> input {
+			width: 100%;
+		}
+	}
+
+	.form-btn-wrapper{
+		display: flex;
+		flex-direction: row;
+		justify-content: right;
+		align-items: center;
+		margin-bottom: 12px;
+		> button {
+			margin-right: 8px;
+		}
 	}
 
 	@media (min-width: 640px) {

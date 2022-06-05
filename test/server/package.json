@@ -1,0 +1,16 @@
+{
+    "name": "gear-test-server",
+    "version": "1.0.0",
+    "description": "Mockup server for testing the gear UI",
+    "main": "server.js",
+    "scripts": {
+      "start": "node server.js"
+    },
+    "author": "Davide Aimar",
+    "license": "ISC",
+    "dependencies": {
+      "cors": "^2.8.5",
+      "express": "^4.18.1"
+    }
+  }
+  

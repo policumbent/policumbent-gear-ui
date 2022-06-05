@@ -4,6 +4,12 @@ export type Gear = {
     position: GearPosition;
 }
 
+export type Pid = {
+    Kp: number;
+    Ki: number;
+    Kd: number;
+}
+
 export type GearPosition = {
     up: number;
     down: number;

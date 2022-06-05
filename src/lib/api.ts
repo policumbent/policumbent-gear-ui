@@ -1,40 +1,41 @@
-import type { BikeInfo, Gear, Servo } from "./types";
-import { convertGears, waitFor } from "./utils";
+import type { BikeInfo, Gear, Servo, Pid } from "./types";
+import { convertGears } from "./utils";
+
+const endpoint = '__API_ENDPOINT'; // replaced by rollup based on an environment variable called 'API_ENDPOINT' in a .env file
+
+console.log(endpoint);
 
 export async function getBikeInfo(): Promise<BikeInfo> {
-    // const response = await fetch('/api/info');
-    // const data = await response.json();
-    let data = {} as object;
-    await waitFor(500);
-    data = {
-        name: "phoenix",
-        gear: 11,
-        servo: 1,
-        last_calibration: "2020-01-01"
-    }
+    const response = await fetch(`${endpoint}api/info`);
+    const data = await response.json();
     return data as BikeInfo;
 }
 
+export async function getPid(): Promise<Pid> {
+    const response = await fetch(`${endpoint}api/pid`);
+    const data = await response.json();
+    return data as Pid;
+}
+
+export async function setPid(data: Pid): Promise<string> {
+    const res = await fetch(`${endpoint}api/pid`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+    });
+    if (res.ok) {
+        return "ok";
+    }
+    else {
+        throw new Error(`${res.status} ${res.statusText}`);
+    }
+}
+
 export async function getGearValues(): Promise<Servo[]> {
-    //const response = await fetch('/api/gear/configuration');
-    // const data = await response.json();
-    await waitFor(500);
-    let data = {} as object;
-    data = {
-        "servo1": [ 
-            { "id": 1, "position": { "up": 101, "down": 102 } },
-            { "id": 2, "position": { "up": 103, "down": 104 } },
-            { "id": 3, "position": { "up": 105, "down": 106 } },
-            { "id": 4, "position": { "up": 107, "down": 108 } },
-            { "id": 5, "position": { "up": 109, "down": 110 } },
-            { "id": 6, "position": { "up": 111, "down": 112 } },
-            { "id": 7, "position": { "up": 113, "down": 114 } },
-            { "id": 8, "position": { "up": 115, "down": 116 } },
-            { "id": 9, "position": { "up": 117, "down": 118 } },
-            { "id": 10, "position": { "up": 119, "down": 120 } },
-            { "id": 11, "position": { "up": 121, "down": 122 } },
-        ]
-    };
+    const response = await fetch(`${endpoint}api/gear/configuration`);
+    const data = await response.json();
 
 
     let values: Servo[] = [];
@@ -54,7 +55,7 @@ export async function getGearValues(): Promise<Servo[]> {
 }
 
 export async function sendGear(gear_id: number, payload: object): Promise<string> {
-    const res = await fetch(`/api/gear?id=${gear_id}`, {
+    const res = await fetch(`${endpoint}api/gear?id=${gear_id}`, {
         method: 'PUT',
         headers: {
             'Content-Type': 'application/json'
