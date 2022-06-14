@@ -18,6 +18,7 @@
 			await receiveData();
 		} catch (error) {
 			console.error(error);
+			alert("Unable to receive data from the bike, check that you are connected to the same network and the API Endpoint is correct. Open the console for more details.");
 		}
 	})
 
