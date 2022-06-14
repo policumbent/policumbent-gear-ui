@@ -42,6 +42,7 @@ export default {
 	plugins: [
 
 		replace({
+			preventAssignment: true,
 			'__API_ENDPOINT': process.env.API_ENDPOINT
 		}, {
 			globals: {
