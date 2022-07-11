@@ -48,7 +48,7 @@
 		}
 	}
 
-	async function sendData(){
+	async function sendGear(){
 		try {
 			let data = [
 				new_positions[0].gears[selected_gear-1]
@@ -63,20 +63,43 @@
 		}
 	}
 
+	async function sendAllGears(){
+		try {
+			let promises = [];
+			new_positions[0].gears.forEach((gear, i) => {
+				let data = [
+					gear
+				];
+				if (num_servo > 1)
+					data.push(new_positions[1].gears[i-1]);
+				promises.push(sendBikeData(data));
+			});
+			await Promise.all(promises);
+		} catch (error) {
+			alert(`Error sending gears: \n${error}`);
+		}
+	}
+
 	async function importWrapper(){
 		const fileInput = document.getElementById("import-file") as HTMLInputElement;
 		try {
 			const new_pos = await readPositionsFromFile(fileInput);
 			console.log("Read from file: ", new_pos);
-			if (new_pos && new_pos.every(p => p.gears.length === num_gears)) {
+			if (new_pos && num_servo === new_pos.length && new_pos.every(p => p.gears.length === num_gears)) {
 				// old_positions = JSON.parse(JSON.stringify(new_pos));
 				new_positions = JSON.parse(JSON.stringify(new_pos));
+				await sendAllGears();
 				alert("Import successful");
 			} else {
-				alert("Invalid file");
+				if (num_servo !== new_pos.length)
+					alert("Number of servos in file does not match number of servos in bike, try another file.");
+				else if (!new_pos.every(p => p.gears.length === num_gears))
+					alert("Number of gears in file does not match number of gears in bike, try another file.");
+				else
+					alert("Invalid file");
 			}
 		} catch (error) {
-			console.log(error);
+			console.log("Error: ", error);
 			alert("Invalid file");
 		}
 	}
@@ -241,7 +264,7 @@
 			<span on:click={() => importWrapper() }>Importa posizioni da file</span>
 			<input type="file" id="import-file" hidden>
 		</section>
-		<div class="send-button" on:click="{ ()=>sendData() }">
+		<div class="send-button" on:click="{ ()=>sendGear() }">
 			<svg width="54" height="54" viewBox="0 0 54 54" fill="none" xmlns="http://www.w3.org/2000/svg">
 				<circle cx="27" cy="27" r="27" fill="#C4C4C4"/>
 				<path d="M15.7038 16.7988L27.9075 22.0312L15.6875 20.4062L15.7038 16.7988ZM27.8913 30.9688L15.6875 36.2012V32.5938L27.8913 30.9688ZM12.4537 11.875L12.4375 23.25L36.8125 26.5L12.4375 29.75L12.4537 41.125L46.5625 26.5L12.4537 11.875Z" fill="black"/>
