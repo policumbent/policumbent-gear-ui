@@ -9,6 +9,8 @@ import css from 'rollup-plugin-css-only';
 import replace from '@rollup/plugin-replace';
 
 const production = !process.env.ROLLUP_WATCH;
+const pkg = require("./package.json");
+
 
 function serve() {
 	let server;
@@ -43,7 +45,8 @@ export default {
 
 		replace({
 			preventAssignment: true,
-			'__API_ENDPOINT': process.env.API_ENDPOINT
+			'__API_ENDPOINT': process.env.API_ENDPOINT, 
+			'__VERSION__': pkg.version
 		}, {
 			globals: {
 				'__API_ENDPOINT': true

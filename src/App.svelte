@@ -327,6 +327,10 @@
 			<span on:click={() => importWrapper() }>Importa posizioni da file</span>
 			<input type="file" id="import-file" hidden>
 		</section>
+		<section class="version">
+			v{`__VERSION__`}
+		</section>
+
 		<div class="send-button send-button-all" on:click="{ ()=>sendAllGears() }">
 			<svg width="54" height="54" viewBox="0 0 54 54" fill="none" xmlns="http://www.w3.org/2000/svg">
 				<circle cx="27" cy="27" r="27" fill="#C4C4C4"/>
@@ -375,6 +379,14 @@
 		cursor: pointer;
 		display: inline-block;
 		border-radius: 8px;
+	}
+
+	.version{
+		margin-top: 5%;
+		color: #aaaaaa;
+		display: flex;
+		justify-content: center;
+		font-size: 0.8em;
 	}
 
 	.gears{
