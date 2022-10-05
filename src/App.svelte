@@ -4,6 +4,7 @@
 	import { exportPositions, readPositionsFromFile } from "./lib/utils";
 	import { toast, SvelteToast } from "@zerodevx/svelte-toast";
 	import type { Pid, Servo } from "./lib/types";
+    import { CollapsibleCard } from 'svelte-collapsible'
 
 	let selected_gear: number;
 	let selected_servo: Array<number>;
@@ -216,17 +217,24 @@
 			Getting bike info...
 		</div>
 	{:else}
-		<section>
+		<section>				
 			<h1>Calibrazione {bike_name}</h1>
-			<p>
-				Seleziona un servo ed una marcia per iniziare la calibrazione del cambio.<br/>
-				Modificare i valori dalla form in fondo alla pagina.<br/>
-				Per inviare le modifiche alla bici premi su uno dei due bottoni in basso a destra, uno invia solo la marcia selezionata e l'altro tutte le marce.<br/>
-				Per resettare le modifiche premere l'icona in basso a sinistra, si riprendono i valori attuali dalla bici.
-			</p>
+			
+			<div class="calibration-info">
+
+				<CollapsibleCard open={false}>
+					<h3 slot="header">Istruzioni</h3>
+					<p slot="body">
+						Seleziona un servo ed una marcia per iniziare la calibrazione del cambio.<br/>
+						Modificare i valori dalla form in fondo alla pagina.<br/>
+						Per inviare le modifiche alla bici premi su uno dei due bottoni in basso a destra, uno invia solo la marcia selezionata e l'altro tutte le marce.<br/>
+						Per resettare le modifiche premere l'icona in basso a sinistra, si riprendono i valori attuali dalla bici.
+					</p>
+				</CollapsibleCard>
+			</div>
+
 			<input type=checkbox bind:checked={reverse} id="reverseCheckbox" hidden >
 			<label class="reverse-button" for="reverseCheckbox">Inverti layout</label>
-			
 		</section>
 		{#if num_servo==1 && pid}
 		<section>
@@ -387,6 +395,11 @@
 		display: flex;
 		justify-content: center;
 		font-size: 0.8em;
+	}
+
+	.calibration-info{
+		color: #aaaaaa;
+		margin-bottom: 5%;
 	}
 
 	.gears{

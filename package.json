@@ -24,6 +24,7 @@
     "sirv-cli": "^2.0.0",
     "svelte": "^3.0.0",
     "svelte-check": "^2.0.0",
+    "svelte-collapsible": "^0.2.1",
     "svelte-preprocess": "^4.10.4",
     "svelte-toast": "^1.0.0",
     "tslib": "^2.3.1",
